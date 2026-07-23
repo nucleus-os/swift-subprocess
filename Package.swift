@@ -3,13 +3,6 @@
 
 import PackageDescription
 
-var dep: [Package.Dependency] = [
-    .package(
-        url: "https://github.com/apple/swift-system",
-        from: "1.5.0"
-    )
-]
-
 // Enable SubprocessFoundation by default
 let defaultTraits: Set<String> = ["SubprocessFoundation"]
 
@@ -36,7 +29,9 @@ let package = Package(
             enabledTraits: defaultTraits
         ),
     ],
-    dependencies: dep,
+    dependencies: [
+        .package(path: "../swift-system"),
+    ],
     targets: [
         .target(
             name: "Subprocess",
