@@ -3814,6 +3814,32 @@ private func openResourceCount() -> Int? {
 }
 
 extension SubprocessIntegrationTests {
+    @Test func testStreamingIteratorRemainsFinishedAfterEOF() async throws {
+        #if os(Windows)
+        let setup = TestSetup(
+            executable: .name("cmd.exe"),
+            arguments: ["/c", "echo", "finished"]
+        )
+        #else
+        let setup = TestSetup(
+            executable: .path("/bin/sh"),
+            arguments: ["-c", "printf finished"]
+        )
+        #endif
+
+        _ = try await _run(
+            setup,
+            input: .none,
+            output: .sequence,
+            error: .discarded
+        ) { execution in
+            var iterator = execution.standardOutput.makeAsyncIterator()
+            while try await iterator.next() != nil {}
+            #expect(try await iterator.next() == nil)
+            #expect(try await iterator.next() == nil)
+        }
+    }
+
     /// Run many subprocesses sequentially to make sure Subprocess does not leak fds.
     ///
     /// This test runs inside an exit test for two reasons:

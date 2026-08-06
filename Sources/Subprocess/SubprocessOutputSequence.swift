@@ -63,17 +63,22 @@ public struct SubprocessOutputSequence: AsyncSequence, @unchecked Sendable {
         private let processIdentifier: ProcessIdentifier
         private let preferredBufferSize: Int
         private var buffer: [Buffer]
+        private var finished: Bool
 
         internal init(diskIO: DiskIO, processIdentifier: ProcessIdentifier) {
             self.diskIO = diskIO
             self.processIdentifier = processIdentifier
             self.buffer = []
+            self.finished = false
             // Only need to query it once at beginning of stream
             self.preferredBufferSize = AsyncIO.queryPipeBufferSize(for: diskIO)
         }
 
         /// Retrieves the next buffer in the sequence, or `nil` if the sequence ended.
         public mutating func next(isolation actor: isolated (any Actor)?) async throws -> Buffer? {
+            guard !self.finished else {
+                return nil
+            }
             // If we have more left in buffer, use that
             guard self.buffer.isEmpty else {
                 return self.buffer.removeFirst()
@@ -86,6 +91,7 @@ public struct SubprocessOutputSequence: AsyncSequence, @unchecked Sendable {
             )
             guard let data else {
                 // We finished reading. Close the file descriptor now
+                self.finished = true
                 #if canImport(WinSDK)
                 try _safelyClose(.handle(self.diskIO))
                 #else
