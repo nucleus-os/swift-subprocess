@@ -30,7 +30,9 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(path: "../swift-system")
+        .package(
+            url: "https://github.com/nucleus-os/swift-system.git",
+            revision: "2b0f3ac4a6b12719c7f72ebe7db26a34dabd7979")
     ],
     targets: [
         .target(
